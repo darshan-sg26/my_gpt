@@ -1,0 +1,68 @@
+# =========================
+# Python Backend
+# =========================
+
+# Virtual Environment
+Backend/venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+Backend/.env
+Frontend/.env
+
+# Optional example envs can stay tracked
+# Backend/.env.example
+# Frontend/.env.example
+
+# Python testing/cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# SQLite DBs
+*.sqlite3
+*.db
+
+# =========================
+# React / Frontend
+# =========================
+
+# Node modules
+Frontend/node_modules/
+node_modules/
+
+# Build folders
+dist/
+build/
+
+# Vite cache
+.vite/
+
+# =========================
+# VS Code / IDE
+# =========================
+
+.vscode/
+.idea/
+
+# =========================
+# OS files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Misc
+# =========================
+
+*.tmp
+*.swp
