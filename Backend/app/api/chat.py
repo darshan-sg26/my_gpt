@@ -108,7 +108,7 @@ async def delete_chat(chat_id: str, current_user: UserInDB = Depends(get_current
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Chat not found")
         
-    # Delete associated messages
+    #Delete associated messages
     await db.messages.delete_many({"chat_id": chat_id})
     return {"message": "Chat deleted successfully"}
 
