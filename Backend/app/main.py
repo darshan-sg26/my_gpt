@@ -18,7 +18,7 @@ app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production phase,replace with frontend URL
+    allow_origins=["https://mygpt.vercel.app"], # In production phase,replace with frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
