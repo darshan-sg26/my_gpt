@@ -202,7 +202,7 @@ Contributions are welcome!
 # Developer
 
 Darshan S G
-Engineering student passionate about building AI-powered applications, modern web systems, and intelligent assistant platforms
+- Engineering student passionate about building AI-powered applications, modern web systems, and intelligent assistant platforms
 
 ---
 
