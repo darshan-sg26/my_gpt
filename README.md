@@ -198,3 +198,14 @@ Contributions are welcome!
 5. Open a Pull Request
 
 ---
+
+# Developer
+
+Darshan S G
+Engineering student passionate about building AI-powered applications, modern web systems, and intelligent assistant platforms
+
+---
+
+# License
+
+This project is for Educational purpose and developemnt purpose
