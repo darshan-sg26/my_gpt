@@ -42,7 +42,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if db is None:
         raise HTTPException(status_code=500, detail="Database not initialized")
     
-    # OAuth2PasswordRequestForm uses 'username' field, we'll expect email in it
+    # OAuth2PasswordRequestForm uses 'username' field,we will expect email in it 
     user = await db.users.find_one({"email": form_data.username})
     if not user or not verify_password(form_data.password, user["hashed_password"]):
         raise HTTPException(
