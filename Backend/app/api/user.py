@@ -14,7 +14,7 @@ async def get_dashboard(current_user: UserInDB = Depends(get_current_user)):
     db = get_db()
     user_id = current_user.id
     
-    # Get recent chats
+    # Get recent chats done
     recent_chats_cursor = db.chats.find({"user_id": user_id}).sort("updated_at", -1).limit(5)
     recent_chats = []
     async for chat in recent_chats_cursor:
