@@ -134,8 +134,10 @@ const Summarizer = () => {
                 <FileText size={20} className="text-purple-400" />
                 Result
               </h3>
-              <div className="prose prose-invert max-w-none">
-                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{activeSummary.summary_text}</p>
+              <div className="prose prose-invert max-w-none prose-sm md:prose-base">
+                <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {activeSummary.summary_text}
+                </p>
               </div>
             </motion.div>
           )}

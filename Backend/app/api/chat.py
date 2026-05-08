@@ -3,7 +3,8 @@ from typing import List
 from app.models.schemas import ChatCreate, ChatResponse, MessageCreate, MessageResponse, UserInDB
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.services.ai import generate_chat_response
+from app.services.ai import generate_chat_response, generate_chat_stream
+from fastapi.responses import StreamingResponse
 from datetime import datetime
 from bson import ObjectId
 
@@ -95,6 +96,61 @@ async def create_message(chat_id: str, msg_in: MessageCreate, current_user: User
     )
     
     return ai_msg_dict
+
+@router.post("/{chat_id}/messages/stream")
+async def stream_message(chat_id: str, msg_in: MessageCreate, current_user: UserInDB = Depends(get_current_user)):
+    db = get_db()
+    try:
+        chat_obj_id = ObjectId(chat_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid chat ID format")
+
+    chat = await db.chats.find_one({"_id": chat_obj_id, "user_id": current_user.id})
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+        
+    # Save user message
+    user_msg_dict = {
+        "chat_id": chat_id,
+        "user_id": current_user.id,
+        "role": "user",
+        "content": msg_in.content,
+        "created_at": datetime.utcnow()
+    }
+    await db.messages.insert_one(user_msg_dict)
+    
+    # Get history for AI
+    history_cursor = db.messages.find({"chat_id": chat_id}).sort("created_at", 1)
+    history = []
+    async for h_msg in history_cursor:
+        history.append({"role": h_msg["role"], "content": h_msg["content"]})
+        
+    async def event_generator():
+        full_content = ""
+        try:
+            async for chunk in generate_chat_stream(history):
+                full_content += chunk
+                yield chunk
+            
+            # Save AI response to DB once finished
+            ai_msg_dict = {
+                "chat_id": chat_id,
+                "user_id": current_user.id,
+                "role": "ai",
+                "content": full_content,
+                "created_at": datetime.utcnow()
+            }
+            await db.messages.insert_one(ai_msg_dict)
+            
+            # Update chat updated_at
+            await db.chats.update_one(
+                {"_id": chat_obj_id},
+                {"$set": {"updated_at": datetime.utcnow()}}
+            )
+        except Exception as e:
+            yield f"Error: {str(e)}"
+            
+    return StreamingResponse(event_generator(), media_type="text/plain")
 
 @router.delete("/{chat_id}")
 async def delete_chat(chat_id: str, current_user: UserInDB = Depends(get_current_user)):

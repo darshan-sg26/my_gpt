@@ -5,6 +5,10 @@ from datetime import datetime
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    profile_picture: str = "male"
+
+class ProfilePictureUpdate(BaseModel):
+    profile_picture: str
 
 class UserCreate(UserBase):
     password: str

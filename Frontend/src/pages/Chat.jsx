@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Send, Bot, User, PlusCircle, MessageSquare } from 'lucide-react';
+import { Send, Bot, User, PlusCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Chat = () => {
@@ -57,6 +57,21 @@ const Chat = () => {
     }
   };
 
+  const handleDeleteChat = async (e, chatId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this chat?')) return;
+    
+    try {
+      await api.delete(`/chat/${chatId}`);
+      setChats(chats.filter(c => c._id !== chatId));
+      if (id === chatId) {
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Failed to delete chat', error);
+    }
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
@@ -64,7 +79,7 @@ const Chat = () => {
     let currentChatId = id;
     if (!currentChatId) {
       try {
-        const response = await api.post('/chat/', { title: input.substring(0, 30) + '...' });
+        const response = await api.post('/chat/', { title: input.substring(0, 30) + (input.length > 30 ? '...' : '') });
         currentChatId = response.data._id;
         setChats([response.data, ...chats]);
         navigate(`/chat/${currentChatId}`, { replace: true });
@@ -80,15 +95,44 @@ const Chat = () => {
     setLoading(true);
 
     try {
-      const response = await api.post(`/chat/${currentChatId}/messages`, { 
-        content: userMsg.content,
-        role: 'user',
-        chat_id: currentChatId
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${api.defaults.baseURL}/chat/${currentChatId}/messages/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          content: userMsg.content,
+          role: 'user',
+          chat_id: currentChatId
+        })
       });
-      setMessages(prev => [...prev, response.data]);
+
+      if (!response.ok) throw new Error('Failed to start stream');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      let aiMsg = { role: 'ai', content: '' };
+      setMessages(prev => [...prev, aiMsg]);
+      setLoading(false); // Stop loading animation as stream starts
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        aiMsg.content += chunk;
+        
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = { ...aiMsg };
+          return newMessages;
+        });
+      }
     } catch (error) {
       console.error('Failed to send message', error);
-    } finally {
       setLoading(false);
     }
   };
@@ -107,16 +151,24 @@ const Chat = () => {
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {chats.map(chat => (
-            <button
+            <div
               key={chat._id}
               onClick={() => navigate(`/chat/${chat._id}`)}
-              className={`w-full text-left px-3 py-3 rounded-lg flex items-center gap-3 transition-colors ${
+              className={`group w-full text-left px-3 py-3 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
                 id === chat._id ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
               }`}
             >
-              <MessageSquare size={16} />
-              <span className="truncate text-sm">{chat.title}</span>
-            </button>
+              <div className="flex items-center gap-3 overflow-hidden">
+                <MessageSquare size={16} className="flex-shrink-0" />
+                <span className="truncate text-sm">{chat.title}</span>
+              </div>
+              <button 
+                onClick={(e) => handleDeleteChat(e, chat._id)}
+                className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -130,7 +182,7 @@ const Chat = () => {
                 <Bot size={40} className="text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-300 mb-2">MyGPT Assistant</h2>
-              <p className="text-gray-500 text-center max-w-md">How can I help you today? Type a message below to start a conversation.</p>
+              <p className="text-gray-500 text-center max-w-md">How can I help you today? My personality is now more lively and professional!</p>
             </div>
           ) : (
             <AnimatePresence>
@@ -153,7 +205,11 @@ const Chat = () => {
                       ? 'bg-blue-600 text-white rounded-tr-sm' 
                       : 'bg-gray-800 text-gray-100 rounded-tl-sm border border-gray-700'
                   }`}>
-                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {msg.role === 'user' ? (
+                      <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    ) : (
+                      <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    )}
                   </div>
                 </motion.div>
               ))}

@@ -47,13 +47,23 @@ export const AuthProvider = ({ children }) => {
     await login(email, password);
   };
 
+  const updateProfilePicture = async (picture) => {
+    try {
+      const response = await api.put('/user/me/profile-picture', { profile_picture: picture });
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to update profile picture', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfilePicture }}>
       {children}
     </AuthContext.Provider>
   );

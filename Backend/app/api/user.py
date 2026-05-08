@@ -1,13 +1,32 @@
 from fastapi import APIRouter, Depends
-from app.models.schemas import UserResponse, UserInDB
+from app.models.schemas import UserResponse, UserInDB, ProfilePictureUpdate
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from fastapi import HTTPException
 
 router = APIRouter()
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: UserInDB = Depends(get_current_user)):
     return current_user.model_dump(by_alias=True)
+
+@router.put("/me/profile-picture", response_model=UserResponse)
+async def update_profile_picture(picture_update: ProfilePictureUpdate, current_user: UserInDB = Depends(get_current_user)):
+    if picture_update.profile_picture not in ["male", "female"]:
+        raise HTTPException(status_code=400, detail="Invalid profile picture option")
+        
+    db = get_db()
+    
+    # Update the user in the database
+    await db.users.update_one(
+        {"email": current_user.email},
+        {"$set": {"profile_picture": picture_update.profile_picture}}
+    )
+    
+    # Fetch and return the updated user
+    updated_user = await db.users.find_one({"email": current_user.email})
+    updated_user["_id"] = str(updated_user["_id"])
+    return updated_user
 
 @router.get("/dashboard")
 async def get_dashboard(current_user: UserInDB = Depends(get_current_user)):

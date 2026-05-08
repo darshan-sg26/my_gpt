@@ -14,8 +14,8 @@ const Topbar = () => {
       
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-900 rounded-full border border-gray-800">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
-            <User size={14} />
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white bg-gray-800">
+            {user?.profile_picture === 'female' ? '👩' : user?.profile_picture === 'male' ? '👨' : user?.username?.charAt(0).toUpperCase() || <User size={14} />}
           </div>
           <span className="text-sm font-medium text-gray-300 hidden sm:block">
             {user?.username || 'User'}
